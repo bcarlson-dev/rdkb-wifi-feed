@@ -22,8 +22,39 @@
    - Only changed to environment `gzip` and `TOOLCHAIN_ROOT_DIR` -> `TOOLCHAIN_DIR`
 
 
+## Local Builds
 
+### `easymesh`
 
+- Custom `ONEWIFI_LOCAL_DIR`, `UWM_LOCAL_DIR`, `RDK_WIFI_HAL_LOCAL_DIR`, and `HALINTERFACE_LOCAL_DIR` make params have been added to build from a local copy of one or multiple of these repos.
+- These can be provided is this method:
+```bash
+make package/easymesh/compile V=sc PKG_HASH=skip PKG_MIRROR_HASH=skip UWM_LOCAL_DIR=~/unified-wifi-mesh ONEWIFI_LOCAL_DIR=~/OneWifi
+```
+
+- These parameters must be given for each operation you want to perform on a local build otherwise it will default to the remote version. For example:
+```bash
+make package/easymesh/clean V=sc PKG_HASH=skip PKG_MIRROR_HASH=skip UWM_LOCAL_DIR=~/unified-wifi-mesh
+```
+will run all of the `make clean` targets in that `unified-wifi-mesh` directory and will cleanup the OpenWRT build environment for that package. 
+
+- Running this on the other hand (without `UWM_LOCAL_DIR`)
+```bash
+make package/easymesh/clean V=sc PKG_HASH=skip PKG_MIRROR_HASH=skip
+```
+will just do the default cleanup operation.
+
+- File changes in the local source directories provided are automatically detected so calling 
+```bash
+make package/easymesh/compile V=sc PKG_HASH=skip PKG_MIRROR_HASH=skip UWM_LOCAL_DIR=~/unified-wifi-mesh ONEWIFI_LOCAL_DIR=~/OneWifi
+```
+after changing a line in `~/OneWifi` will compile with that new code included. The `.o` files already exist in `~/OneWifi` so a full re-compilation does not occur unless you do a `clean` first.
+
+### `rdkb-ieee1905`
+
+- This should be able to be done by appending `USE_SOURCE_DIR=~/rdkb_ieee1905` to the `make package/rdkb-ieee1905/compile` command however that is un-tested at this time.
+
+---
 
 # RDKB Docker and OpenWRT Configuration Steps
 
@@ -65,14 +96,14 @@ This completes the initial base build for BPI.
 
 1. In the `openwrt` folder install this feed
 ```bash
-echo "src-git rdkwifi https://github.com/bcarlson-dev/rdkwifi-feed.git" >> feeds.conf.default
+echo "src-git rdkb_wifi https://github.com/bcarlson-dev/rdkb-wifi-feed.git" >> feeds.conf.default
 ./scripts/feeds update -a
-./scripts/feeds install -a -p rdkwifi
+./scripts/feeds install -a -p rdkb_wifi
 ```
 
 2. Copy the "golden" config file 
 ```bash
-cp ./feeds/rdkwifi/easymesh/MT7966.config .config
+cp ./feeds/rdkb_wifi/easymesh/MT7966.config .config
 ```
 
 3. Build:

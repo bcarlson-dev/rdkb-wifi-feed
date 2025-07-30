@@ -8,27 +8,39 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=0
 PKG_HASH:=skip
 
+ifneq ($(strip $(ONEWIFI_LOCAL_DIR)$(UWM_LOCAL_DIR)$(RDK_WIFI_HAL_LOCAL_DIR)$(HALINTERFACE_LOCAL_DIR)),)
+  # Check if any local directory has files newer than .built
+  WATCH_DIRS:=$(ONEWIFI_LOCAL_DIR) $(UWM_LOCAL_DIR) $(RDK_WIFI_HAL_LOCAL_DIR) $(HALINTERFACE_LOCAL_DIR)
+  ifneq ($(wildcard $(PKG_BUILD_DIR)/.built),)
+    NEWEST_FILE:=$(shell find $(WATCH_DIRS) -type f -newer $(PKG_BUILD_DIR)/.built 2>/dev/null | head -n1)
+    ifneq ($(NEWEST_FILE),)
+      $(shell rm -f $(PKG_BUILD_DIR)/.built*)
+    endif
+  endif
+endif
+
+
 include $(INCLUDE_DIR)/package.mk
 
-define Package/easymesh
+define Package/$(PKG_NAME)
   SECTION:=rdkwifi
   CATEGORY:=RDK Wi-Fi
   TITLE:=EasyMesh with OneWifi
-  DEPENDS:=+avro-c +libopenssl +cJSON +libev +libnl +libnl-genl +libnl-route +libuuid +libstdcpp +libmariadb-fixed +libmariadb-fixed-plugin-auth-gssapi-client +libmariadb-fixed-plugin-remote-io +libreadline
+  DEPENDS:=+avro-c +libopenssl +cJSON +libev +libnl +libnl-genl +libnl-route +libuuid +libstdcpp +libmariadb-fixed +libmariadb-fixed-plugin-auth-gssapi-client +libmariadb-fixed-plugin-remote-io +libreadline +rdkb-ieee1905
 endef
 
-define Package/easymesh/description
+define Package/$(PKG_NAME)/description
   EasyMesh implementation with OneWifi replacing hostapd functionality
 endef
 
-define Package/easymesh/config
+define Package/$(PKG_NAME)/config
   config CRYPTO_OFFLOAD_INLINE
     bool
-    default y if PACKAGE_easymesh
+    default y if PACKAGE_$(PKG_NAME)
 
   config CRYPTO_XFRM_OFFLOAD_MTK_PCE
     bool
-    default y if PACKAGE_easymesh
+    default y if PACKAGE_$(PKG_NAME)
 endef
 
 # Git repositories
@@ -76,19 +88,51 @@ define BuildEnvironment
 	WIFI_HOSTAP_SUPPLICANT=$(PKG_BUILD_DIR)/rdk-wifi-libhostap/source/hostap-2.10/wpa_supplicant \
 	WIFI_HAL_INTERFACE=$(PKG_BUILD_DIR)/halinterface/include \
 	ONEWIFI_HAL_INTF_HOME=$(PKG_BUILD_DIR)/halinterface/include \
-	ONEWIFI_BUS_LIB_HOME=$(PKG_BUILD_DIR)/OneWifi/lib/bus
+	ONEWIFI_BUS_LIB_HOME=$(PKG_BUILD_DIR)/OneWifi/lib/bus \
+	WITH_SAP=1 \
+	ENABLE_DEBUG_MODE=OFF
 endef
 
 define Build/Prepare
 	# Create build directory structure
 	mkdir -p $(PKG_BUILD_DIR)
 	
-	# Clone all repositories
-	cd $(PKG_BUILD_DIR) && \
-	git clone --branch feature/owrt $(ONEWIFI_REPO) OneWifi && \
-	git clone --branch feature/owrt $(UNIFIED_WIFI_MESH_REPO) unified-wifi-mesh && \
-	git clone $(RDK_WIFI_HAL_REPO) rdk-wifi-hal && \
-	git clone $(HALINTERFACE_REPO) halinterface
+	# Clone all repositories while allowing for local overrides
+	# Handle OneWifi repository
+ifdef ONEWIFI_LOCAL_DIR
+	@echo "Using local OneWifi source from: $(ONEWIFI_LOCAL_DIR)"
+	ln -sf $(ONEWIFI_LOCAL_DIR) $(PKG_BUILD_DIR)/OneWifi
+else
+	@echo "Cloning OneWifi from git repository"
+	cd $(PKG_BUILD_DIR) && git clone --branch feature/owrt $(ONEWIFI_REPO) OneWifi
+endif
+	
+	# Handle unified-wifi-mesh repository
+ifdef UWM_LOCAL_DIR
+	@echo "Using local unified-wifi-mesh source from: $(UWM_LOCAL_DIR)"
+	ln -sf $(UWM_LOCAL_DIR) $(PKG_BUILD_DIR)/unified-wifi-mesh
+else
+	@echo "Cloning unified-wifi-mesh from git repository"
+	cd $(PKG_BUILD_DIR) && git clone --branch feature/owrt $(UNIFIED_WIFI_MESH_REPO) unified-wifi-mesh
+endif
+	
+	# Handle rdk-wifi-hal repository
+ifdef RDK_WIFI_HAL_LOCAL_DIR
+	@echo "Using local rdk-wifi-hal source from: $(RDK_WIFI_HAL_LOCAL_DIR)"
+	ln -sf $(RDK_WIFI_HAL_LOCAL_DIR) $(PKG_BUILD_DIR)/rdk-wifi-hal
+else
+	@echo "Cloning rdk-wifi-hal from git repository"
+	cd $(PKG_BUILD_DIR) && git clone $(RDK_WIFI_HAL_REPO) rdk-wifi-hal
+endif
+	
+	# Handle halinterface repository
+ifdef HALINTERFACE_LOCAL_DIR
+	@echo "Using local halinterface source from: $(HALINTERFACE_LOCAL_DIR)"
+	ln -sf $(HALINTERFACE_LOCAL_DIR) $(PKG_BUILD_DIR)/halinterface
+else
+	@echo "Cloning halinterface from git repository"
+	cd $(PKG_BUILD_DIR) && git clone $(HALINTERFACE_REPO) halinterface
+endif
 	
 	# Create install directories
 	mkdir -p $(PKG_BUILD_DIR)/OneWifi/install/bin
@@ -106,6 +150,11 @@ define Build/Prepare
 endef
 
 define Build/Compile
+
+	if [ -n "$(UWM_LOCAL_DIR)" ] || [ -n "$(ONEWIFI_LOCAL_DIR)" ] || [ -n "$(RDK_WIFI_HAL_LOCAL_DIR)" ] || [ -n "$(HALINTERFACE_LOCAL_DIR)" ]; then \
+		rm -f $(PKG_BUILD_DIR)/.built*; \
+	fi
+
 	# First, build OneWifi (provides libraries for unified-wifi-mesh)
 	CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
 	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/OneWifi/build/openwrt/ \
@@ -155,7 +204,63 @@ define Build/Compile
 		$(BuildEnvironment)
 endef
 
-define Package/easymesh/install
+define Build/Clean
+	# Clean local directories if they're being used
+	if [ -n "$(ONEWIFI_LOCAL_DIR)" ]; then \
+		echo "Cleaning OneWifi in local directory: $(ONEWIFI_LOCAL_DIR)"; \
+		if [ -d "$(ONEWIFI_LOCAL_DIR)/build/openwrt" ]; then \
+			CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
+			$(MAKE) $(PKG_JOBS) -C $(ONEWIFI_LOCAL_DIR)/build/openwrt/ clean \
+				$(TARGET_CONFIGURE_OPTS) \
+				INSTALLDIR="$(ONEWIFI_LOCAL_DIR)/install" \
+				ONE_WIFI_HOME=$(ONEWIFI_LOCAL_DIR) \
+				ONEWIFI_HOME=$(ONEWIFI_LOCAL_DIR); \
+		fi; \
+	fi
+
+	if [ -n "$(UWM_LOCAL_DIR)" ]; then \
+		echo "Cleaning unified-wifi-mesh in local directory: $(UWM_LOCAL_DIR)"; \
+		if [ -d "$(UWM_LOCAL_DIR)/build/openwrt/libalsap" ]; then \
+			CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
+			$(MAKE) $(PKG_JOBS) -C $(UWM_LOCAL_DIR)/build/openwrt/libalsap/ clean \
+				$(TARGET_CONFIGURE_OPTS) \
+				INSTALLDIR="$(UWM_LOCAL_DIR)/install" \
+				ONE_WIFI_EM_HOME=$(UWM_LOCAL_DIR) \
+				ONEWIFI_EM_HOME=$(UWM_LOCAL_DIR); \
+		fi; \
+		if [ -d "$(UWM_LOCAL_DIR)/build/openwrt/agent" ]; then \
+			CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
+			$(MAKE) $(PKG_JOBS) -C $(UWM_LOCAL_DIR)/build/openwrt/agent/ clean \
+				$(TARGET_CONFIGURE_OPTS) \
+				STAGING_DIR="$(STAGING_DIR)" \
+				INSTALLDIR="$(UWM_LOCAL_DIR)/install" \
+				ONE_WIFI_EM_HOME=$(UWM_LOCAL_DIR) \
+				ONEWIFI_EM_HOME=$(UWM_LOCAL_DIR); \
+		fi; \
+		if [ -d "$(UWM_LOCAL_DIR)/build/openwrt/ctrl" ]; then \
+			CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
+			$(MAKE) $(PKG_JOBS) -C $(UWM_LOCAL_DIR)/build/openwrt/ctrl/ clean \
+				$(TARGET_CONFIGURE_OPTS) \
+				STAGING_DIR="$(STAGING_DIR)" \
+				INSTALLDIR="$(UWM_LOCAL_DIR)/install" \
+				ONE_WIFI_EM_HOME=$(UWM_LOCAL_DIR) \
+				ONEWIFI_EM_HOME=$(UWM_LOCAL_DIR); \
+		fi; \
+		if [ -d "$(UWM_LOCAL_DIR)/build/openwrt/cli" ]; then \
+			CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
+			$(MAKE) $(PKG_JOBS) -C $(UWM_LOCAL_DIR)/build/openwrt/cli/ clean \
+				$(TARGET_CONFIGURE_OPTS) \
+				STAGING_DIR="$(STAGING_DIR)" \
+				INSTALLDIR="$(UWM_LOCAL_DIR)/install" \
+				ONE_WIFI_EM_HOME=$(UWM_LOCAL_DIR) \
+				ONEWIFI_EM_HOME=$(UWM_LOCAL_DIR); \
+		fi; \
+	fi
+
+	@echo "Clean completed for local directories"
+endef
+
+define Package/$(PKG_NAME)/install
 	# Install binaries
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/OneWifi/install/bin/OneWifi $(1)/usr/bin/
@@ -198,4 +303,4 @@ define Package/easymesh/install
 	fi
 endef
 
-$(eval $(call BuildPackage,easymesh))
+$(eval $(call BuildPackage,$(PKG_NAME)))
