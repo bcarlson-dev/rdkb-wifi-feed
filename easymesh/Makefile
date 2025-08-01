@@ -50,6 +50,7 @@ RDK_WIFI_HAL_REPO:=https://github.com/rdkcentral/rdk-wifi-hal.git
 HALINTERFACE_REPO:=https://github.com/rdkcentral/rdkb-halif-wifi.git
 UPSTREAM_HOSTAP_URL:=git://w1.fi/hostap.git
 HOSTAP_PATCHES_REPO:=https://github.com/rdkcentral/hostap-patches.git
+OW_BASE64_REPO:=https://github.com/xmidt-org/trower-base64.git
 
 # Hostap version and commit
 SRCREV_2_10:=9d07b9447e76059a2ddef2a879c57d0934634188
@@ -89,6 +90,7 @@ define BuildEnvironment
 	WIFI_HAL_INTERFACE=$(PKG_BUILD_DIR)/halinterface/include \
 	ONEWIFI_HAL_INTF_HOME=$(PKG_BUILD_DIR)/halinterface/include \
 	ONEWIFI_BUS_LIB_HOME=$(PKG_BUILD_DIR)/OneWifi/lib/bus \
+	WIFI_TROWER_BASE=$(PKG_BUILD_DIR)/trower-base64/include/ \
 	WITH_SAP=1 \
 	ENABLE_DEBUG_MODE=OFF
 endef
@@ -133,6 +135,8 @@ else
 	@echo "Cloning halinterface from git repository"
 	cd $(PKG_BUILD_DIR) && git clone $(HALINTERFACE_REPO) halinterface
 endif
+
+	git clone $(OW_BASE64_REPO) $(PKG_BUILD_DIR)/trower-base64
 	
 	# Create install directories
 	mkdir -p $(PKG_BUILD_DIR)/OneWifi/install/bin
