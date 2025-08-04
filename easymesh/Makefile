@@ -106,7 +106,7 @@ ifdef ONEWIFI_LOCAL_DIR
 	ln -sf $(ONEWIFI_LOCAL_DIR) $(PKG_BUILD_DIR)/OneWifi
 else
 	@echo "Cloning OneWifi from git repository"
-	cd $(PKG_BUILD_DIR) && git clone --branch feature/owrt $(ONEWIFI_REPO) OneWifi
+	cd $(PKG_BUILD_DIR) && git clone --branch feature/owrt-feed-build $(ONEWIFI_REPO) OneWifi
 endif
 	
 	# Handle unified-wifi-mesh repository
@@ -115,7 +115,7 @@ ifdef UWM_LOCAL_DIR
 	ln -sf $(UWM_LOCAL_DIR) $(PKG_BUILD_DIR)/unified-wifi-mesh
 else
 	@echo "Cloning unified-wifi-mesh from git repository"
-	cd $(PKG_BUILD_DIR) && git clone --branch feature/owrt $(UNIFIED_WIFI_MESH_REPO) unified-wifi-mesh
+	cd $(PKG_BUILD_DIR) && git clone --branch feature/owrt-feed-build $(UNIFIED_WIFI_MESH_REPO) unified-wifi-mesh
 endif
 	
 	# Handle rdk-wifi-hal repository
