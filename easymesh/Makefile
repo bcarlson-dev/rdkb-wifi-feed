@@ -19,6 +19,17 @@ ifneq ($(strip $(ONEWIFI_LOCAL_DIR)$(UWM_LOCAL_DIR)$(RDK_WIFI_HAL_LOCAL_DIR)$(HA
   endif
 endif
 
+# Expand UWM and OneWifi local directories for local `make clean`
+ifneq ($(strip $(ONEWIFI_LOCAL_DIR)),)
+  ONEWIFI_EXPANDED:=$(shell eval echo $(ONEWIFI_LOCAL_DIR))
+endif
+
+ifneq ($(strip $(UWM_LOCAL_DIR)),)
+  UWM_EXPANDED:=$(shell eval echo $(UWM_LOCAL_DIR))
+endif
+
+
+PKG_BUILD_DEPENDS:=em-kernel-patches
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,7 +37,11 @@ define Package/$(PKG_NAME)
   SECTION:=rdkwifi
   CATEGORY:=RDK Wi-Fi
   TITLE:=EasyMesh with OneWifi
-  DEPENDS:=+avro-c +libopenssl +cJSON +libev +libnl +libnl-genl +libnl-route +libuuid +libstdcpp +libmariadb-fixed +libmariadb-fixed-plugin-auth-gssapi-client +libmariadb-fixed-plugin-remote-io +libreadline +rdkb-ieee1905
+  DEPENDS:=+avro-c +libopenssl +cJSON +libev +libnl +libnl-genl \
+  		   +libnl-route +libuuid +libstdcpp +libmariadb-fixed \
+		   +libmariadb-fixed-plugin-auth-gssapi-client \
+		   +libmariadb-fixed-plugin-remote-io +libreadline \
+		   +rdkb-ieee1905
 endef
 
 define Package/$(PKG_NAME)/description
@@ -212,52 +227,52 @@ define Build/Clean
 	# Clean local directories if they're being used
 	if [ -n "$(ONEWIFI_LOCAL_DIR)" ]; then \
 		echo "Cleaning OneWifi in local directory: $(ONEWIFI_LOCAL_DIR)"; \
-		if [ -d "$(ONEWIFI_LOCAL_DIR)/build/openwrt" ]; then \
+		if [ -d "$(ONEWIFI_EXPANDED)/build/openwrt" ]; then \
 			CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
-			$(MAKE) $(PKG_JOBS) -C $(ONEWIFI_LOCAL_DIR)/build/openwrt/ clean \
+			$(MAKE) $(PKG_JOBS) -C $(ONEWIFI_EXPANDED)/build/openwrt/ clean \
 				$(TARGET_CONFIGURE_OPTS) \
-				INSTALLDIR="$(ONEWIFI_LOCAL_DIR)/install" \
-				ONE_WIFI_HOME=$(ONEWIFI_LOCAL_DIR) \
-				ONEWIFI_HOME=$(ONEWIFI_LOCAL_DIR); \
+				INSTALLDIR="$(ONEWIFI_EXPANDED)/install" \
+				ONE_WIFI_HOME=$(ONEWIFI_EXPANDED) \
+				ONEWIFI_HOME=$(ONEWIFI_EXPANDED); \
 		fi; \
 	fi
 
 	if [ -n "$(UWM_LOCAL_DIR)" ]; then \
 		echo "Cleaning unified-wifi-mesh in local directory: $(UWM_LOCAL_DIR)"; \
-		if [ -d "$(UWM_LOCAL_DIR)/build/openwrt/libalsap" ]; then \
+		if [ -d "$(UWM_EXPANDED)/build/openwrt/libalsap" ]; then \
 			CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
-			$(MAKE) $(PKG_JOBS) -C $(UWM_LOCAL_DIR)/build/openwrt/libalsap/ clean \
+			$(MAKE) $(PKG_JOBS) -C $(UWM_EXPANDED)/build/openwrt/libalsap/ clean \
 				$(TARGET_CONFIGURE_OPTS) \
-				INSTALLDIR="$(UWM_LOCAL_DIR)/install" \
-				ONE_WIFI_EM_HOME=$(UWM_LOCAL_DIR) \
-				ONEWIFI_EM_HOME=$(UWM_LOCAL_DIR); \
+				INSTALLDIR="$(UWM_EXPANDED)/install" \
+				ONE_WIFI_EM_HOME=$(UWM_EXPANDED) \
+				ONEWIFI_EM_HOME=$(UWM_EXPANDED); \
 		fi; \
-		if [ -d "$(UWM_LOCAL_DIR)/build/openwrt/agent" ]; then \
+		if [ -d "$(UWM_EXPANDED)/build/openwrt/agent" ]; then \
 			CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
-			$(MAKE) $(PKG_JOBS) -C $(UWM_LOCAL_DIR)/build/openwrt/agent/ clean \
+			$(MAKE) $(PKG_JOBS) -C $(UWM_EXPANDED)/build/openwrt/agent/ clean \
 				$(TARGET_CONFIGURE_OPTS) \
 				STAGING_DIR="$(STAGING_DIR)" \
-				INSTALLDIR="$(UWM_LOCAL_DIR)/install" \
-				ONE_WIFI_EM_HOME=$(UWM_LOCAL_DIR) \
-				ONEWIFI_EM_HOME=$(UWM_LOCAL_DIR); \
+				INSTALLDIR="$(UWM_EXPANDED)/install" \
+				ONE_WIFI_EM_HOME=$(UWM_EXPANDED) \
+				ONEWIFI_EM_HOME=$(UWM_EXPANDED); \
 		fi; \
-		if [ -d "$(UWM_LOCAL_DIR)/build/openwrt/ctrl" ]; then \
+		if [ -d "$(UWM_EXPANDED)/build/openwrt/ctrl" ]; then \
 			CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
-			$(MAKE) $(PKG_JOBS) -C $(UWM_LOCAL_DIR)/build/openwrt/ctrl/ clean \
+			$(MAKE) $(PKG_JOBS) -C $(UWM_EXPANDED)/build/openwrt/ctrl/ clean \
 				$(TARGET_CONFIGURE_OPTS) \
 				STAGING_DIR="$(STAGING_DIR)" \
-				INSTALLDIR="$(UWM_LOCAL_DIR)/install" \
-				ONE_WIFI_EM_HOME=$(UWM_LOCAL_DIR) \
-				ONEWIFI_EM_HOME=$(UWM_LOCAL_DIR); \
+				INSTALLDIR="$(UWM_EXPANDED)/install" \
+				ONE_WIFI_EM_HOME=$(UWM_EXPANDED) \
+				ONEWIFI_EM_HOME=$(UWM_EXPANDED); \
 		fi; \
-		if [ -d "$(UWM_LOCAL_DIR)/build/openwrt/cli" ]; then \
+		if [ -d "$(UWM_EXPANDED)/build/openwrt/cli" ]; then \
 			CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
-			$(MAKE) $(PKG_JOBS) -C $(UWM_LOCAL_DIR)/build/openwrt/cli/ clean \
+			$(MAKE) $(PKG_JOBS) -C $(UWM_EXPANDED)/build/openwrt/cli/ clean \
 				$(TARGET_CONFIGURE_OPTS) \
 				STAGING_DIR="$(STAGING_DIR)" \
-				INSTALLDIR="$(UWM_LOCAL_DIR)/install" \
-				ONE_WIFI_EM_HOME=$(UWM_LOCAL_DIR) \
-				ONEWIFI_EM_HOME=$(UWM_LOCAL_DIR); \
+				INSTALLDIR="$(UWM_EXPANDED)/install" \
+				ONE_WIFI_EM_HOME=$(UWM_EXPANDED) \
+				ONEWIFI_EM_HOME=$(UWM_EXPANDED); \
 		fi; \
 	fi
 

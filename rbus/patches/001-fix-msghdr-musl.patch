@@ -1,0 +1,31 @@
+--- a/src/rtmessage/rtConnection.c
++++ b/src/rtmessage/rtConnection.c
+@@ -1204,1 +1204,3 @@
+-  struct msghdr send_hdr = {NULL, 0, send_vec, 2, NULL, 0, 0};
++  struct msghdr send_hdr = {0};
++  send_hdr.msg_iov = send_vec;
++  send_hdr.msg_iovlen = 2;
+--- a/src/rtmessage/rtrouteBase.c
++++ b/src/rtmessage/rtrouteBase.c
+@@ -167,1 +167,3 @@
+-    struct msghdr send_hdr = {NULL, 0, send_vec, 2, NULL, 0, 0};
++    struct msghdr send_hdr = {0};
++    send_hdr.msg_iov = send_vec;
++    send_hdr.msg_iovlen = 2;
+@@ -546,1 +548,3 @@
+-        struct msghdr send_hdr = {NULL, 0, send_vec, 2, NULL, 0, 0};
++        struct msghdr send_hdr = {0};
++        send_hdr.msg_iov = send_vec;
++        send_hdr.msg_iovlen = 2;
+--- a/src/rtmessage/rtrouted.c
++++ b/src/rtmessage/rtrouted.c
+@@ -513,1 +513,3 @@
+-          struct msghdr send_hdr = {NULL, 0, send_vec, 2, NULL, 0, 0};
++          struct msghdr send_hdr = {0};
++          send_hdr.msg_iov = send_vec;
++          send_hdr.msg_iovlen = 2;
+@@ -701,1 +703,3 @@
+-  struct msghdr send_hdr = {NULL, 0, send_vec, 2, NULL, 0, 0};
++  struct msghdr send_hdr = {0};
++  send_hdr.msg_iov = send_vec;
++  send_hdr.msg_iovlen = 2;

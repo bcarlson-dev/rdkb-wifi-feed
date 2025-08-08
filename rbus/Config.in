@@ -1,0 +1,44 @@
+menu "Configuration"
+	depends on PACKAGE_rbus
+
+    config RBUS_INCLUDE_SAMPLES
+        bool "Build sample applications"
+        default n
+        help
+        Include sample applications in the build.
+        These are useful for development and testing but not
+        required for production use.
+        
+        Sample apps like:
+        - rbusSampleProvider/Consumer
+        - rbusEventProvider/Consumer
+        - rbusMethodProvider/Consumer
+
+    config RBUS_INCLUDE_TEST_APPS
+        bool "Build test applications"
+        default n
+        help
+        Include test applications in the build.
+        These are more extensive test utilities.
+        
+        Test apps like:
+        - rbusTestProvider/Consumer
+        - rbusTestMultiProvider/Consumer
+        - Various stress test utilities
+
+    config RBUS_ENABLE_DEBUG
+        bool "Enable debug build"
+        default n
+        help
+        Build with debug symbols and verbose logging.
+        Uses CMAKE_BUILD_TYPE=Debug instead of Release.
+        This will increase binary size and may impact performance.
+
+    config RBUS_RTROUTED_AUTO_START
+        bool "Auto-start rtrouted daemon"
+        default y
+        help
+        Automatically start the rtrouted daemon at boot.
+        This is required for rbus communication to work.
+
+endmenu

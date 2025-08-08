@@ -2,6 +2,10 @@
 
 ## New Packages
 
+### rbus
+   - OpenWRT port of RDK-Bus. 
+   - More information in [rbus/README.md](rbus/README.md)
+
 ### easymesh
    - Contains Unified-Wifi-Mesh Agent and Controller
    - Contains OneWifi
