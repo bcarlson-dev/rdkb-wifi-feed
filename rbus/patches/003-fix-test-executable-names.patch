@@ -1,0 +1,13 @@
+--- a/test/rbus/CMakeLists.txt
++++ b/test/rbus/CMakeLists.txt
+@@ -23,6 +23,10 @@ include_directories(${PROJECT_SOURCE_DIR}/src/core)
+ include_directories(${PROJECT_SOURCE_DIR}/src/rbus)
+ include_directories(${PROJECT_SOURCE_DIR}/test/rbus/common)
+ 
++# Set a common output directory for all test executables to avoid conflicts
++# with source directories of the same name
++set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
++
+ add_executable(rbusTestProvider
+     provider/rbusTestProvider.c
+     common/runningParamHelper.c
