@@ -1,0 +1,32 @@
+From: Rakhil P E <rakhilpe001@gmail.com>
+Date: Mon, 21 Jul 2025 09:09:00 +0000
+Subject: [PATCH] mt7996: Enable beacon reception in station mode
+
+This patch enables reception of beacon frames in station mode
+by modifying default management frame subtypes.
+
+---
+ mt76/mt7996/init.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+--- a/mt76/mt7996/init.c
++++ b/mt76/mt7996/init.c
+@@ -441,6 +441,18 @@
+ 
+ 	wiphy->available_antennas_rx = phy->mt76->antenna_mask;
+ 	wiphy->available_antennas_tx = phy->mt76->antenna_mask;
++
++	static const struct ieee80211_txrx_stypes mt7996_mgmt_stypes[NUM_NL80211_IFTYPES] = {
++		[NL80211_IFTYPE_STATION] = {
++			.rx = BIT(IEEE80211_STYPE_ACTION >> 4) |
++				BIT(IEEE80211_STYPE_AUTH >> 4) |
++				BIT(IEEE80211_STYPE_PROBE_REQ >> 4) |
++				BIT(IEEE80211_STYPE_BEACON >> 4),
++			.tx = BIT(IEEE80211_STYPE_ACTION >> 4),
++		},
++	};
++
++	wiphy->mgmt_stypes = mt7996_mgmt_stypes;
+ }
+ 
+ static void

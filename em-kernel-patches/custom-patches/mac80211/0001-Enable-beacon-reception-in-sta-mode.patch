@@ -1,0 +1,23 @@
+From: Rakhil P E <rakhilpe001@gmail.com>
+Date: Mon, 21 Jul 2025 09:09:00 +0000
+Subject: [PATCH] mac80211: Enable beacon reception in station mode
+
+This patch enables reception of beacon frames in station mode
+by modifying default management frame subtypes.
+
+---
+ net/mac80211/main.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/net/mac80211/main.c
++++ b/net/mac80211/main.c
+@@ -678,7 +678,8 @@
+ 		 */
+ 		.rx = BIT(IEEE80211_STYPE_ACTION >> 4) |
+ 			BIT(IEEE80211_STYPE_AUTH >> 4) |
+-			BIT(IEEE80211_STYPE_PROBE_REQ >> 4),
++			BIT(IEEE80211_STYPE_PROBE_REQ >> 4) |
++			BIT(IEEE80211_STYPE_BEACON >> 4),
+ 	},
+ 	[NL80211_IFTYPE_AP] = {
+ 		.tx = 0xffff,
