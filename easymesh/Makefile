@@ -28,9 +28,6 @@ ifneq ($(strip $(UWM_LOCAL_DIR)),)
   UWM_EXPANDED:=$(shell eval echo $(UWM_LOCAL_DIR))
 endif
 
-
-PKG_BUILD_DEPENDS:=em-kernel-patches
-
 include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
@@ -38,10 +35,9 @@ define Package/$(PKG_NAME)
   CATEGORY:=RDK Wi-Fi
   TITLE:=EasyMesh with OneWifi
   DEPENDS:=+avro-c +libopenssl +cJSON +libev +libnl +libnl-genl \
-  		   +libnl-route +libuuid +libstdcpp +libmariadb-fixed \
-		   +libmariadb-fixed-plugin-auth-gssapi-client \
-		   +libmariadb-fixed-plugin-remote-io +libreadline \
-		   +rdkb-ieee1905
+  		   +libnl-route +libuuid +libstdcpp \
+		   +rdkb-ieee1905 +sudo +libreadline \
+		   $(if $(CONFIG_EASYMESH_BUILD_CONTROLLER),+libmariadb +libmariadb-plugin-auth-gssapi-client +libmariadb-plugin-remote-io +mariadb-server +mariadb-client)
 endef
 
 define Package/$(PKG_NAME)/description
@@ -49,13 +45,7 @@ define Package/$(PKG_NAME)/description
 endef
 
 define Package/$(PKG_NAME)/config
-  config CRYPTO_OFFLOAD_INLINE
-    bool
-    default y if PACKAGE_$(PKG_NAME)
-
-  config CRYPTO_XFRM_OFFLOAD_MTK_PCE
-    bool
-    default y if PACKAGE_$(PKG_NAME)
+	source "$(SOURCE)/Config.in"
 endef
 
 # Git repositories
@@ -197,30 +187,32 @@ define Build/Compile
 		INSTALLDIR="$(PKG_BUILD_DIR)/unified-wifi-mesh/install" \
 		$(BuildEnvironment)
 	
-	# Build controller
-	CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
-	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/unified-wifi-mesh/build/openwrt/ctrl/ \
-		$(TARGET_CONFIGURE_OPTS) \
-		STAGING_DIR="$(STAGING_DIR)" \
-		INSTALLDIR="$(PKG_BUILD_DIR)/unified-wifi-mesh/install" \
-		$(BuildEnvironment)
+	# Build controller (if enabled)
+	if [ "$(CONFIG_EASYMESH_BUILD_CONTROLLER)" = "y" ]; then \
+		CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
+		$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/unified-wifi-mesh/build/openwrt/ctrl/ \
+			$(TARGET_CONFIGURE_OPTS) \
+			STAGING_DIR="$(STAGING_DIR)" \
+			INSTALLDIR="$(PKG_BUILD_DIR)/unified-wifi-mesh/install" \
+			$(BuildEnvironment); \
+	fi
 
 
-	# Clean CLI Objects (for library re-build)
-	CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
-	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/unified-wifi-mesh/build/openwrt/cli/ clean \
-		$(TARGET_CONFIGURE_OPTS) \
-		STAGING_DIR="$(STAGING_DIR)" \
-		INSTALLDIR="$(PKG_BUILD_DIR)/unified-wifi-mesh/install" \
-		$(BuildEnvironment)
-
-	# Build CLI
-	CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
-	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/unified-wifi-mesh/build/openwrt/cli/ \
-		$(TARGET_CONFIGURE_OPTS) \
-		STAGING_DIR="$(STAGING_DIR)" \
-		INSTALLDIR="$(PKG_BUILD_DIR)/unified-wifi-mesh/install" \
-		$(BuildEnvironment)
+# 	# Clean CLI Objects (for library re-build)
+# 	CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
+# 	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/unified-wifi-mesh/build/openwrt/cli/ clean \
+# 		$(TARGET_CONFIGURE_OPTS) \
+# 		STAGING_DIR="$(STAGING_DIR)" \
+# 		INSTALLDIR="$(PKG_BUILD_DIR)/unified-wifi-mesh/install" \
+# 		$(BuildEnvironment)
+#
+# 	# Build CLI (Disabled because it cannot be run on OpenWRT)
+# 	CFLAGS="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) $(TARGET_LDFLAGS)" \
+# 	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/unified-wifi-mesh/build/openwrt/cli/ \
+# 		$(TARGET_CONFIGURE_OPTS) \
+# 		STAGING_DIR="$(STAGING_DIR)" \
+# 		INSTALLDIR="$(PKG_BUILD_DIR)/unified-wifi-mesh/install" \
+# 		$(BuildEnvironment)
 endef
 
 define Build/Clean

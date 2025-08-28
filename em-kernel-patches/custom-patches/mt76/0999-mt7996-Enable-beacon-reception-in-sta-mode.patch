@@ -6,13 +6,13 @@ This patch enables reception of beacon frames in station mode
 by modifying default management frame subtypes.
 
 ---
- mt76/mt7996/init.c | 13 +++++++++++++
+ mt7996/init.c | 13 +++++++++++++
  1 file changed, 13 insertions(+)
 
---- a/mt76/mt7996/init.c
-+++ b/mt76/mt7996/init.c
+--- a/mt7996/init.c
++++ b/mt7996/init.c
 @@ -441,6 +441,18 @@
- 
+
  	wiphy->available_antennas_rx = phy->mt76->antenna_mask;
  	wiphy->available_antennas_tx = phy->mt76->antenna_mask;
 +
@@ -27,6 +27,6 @@ by modifying default management frame subtypes.
 +	};
 +
 +	wiphy->mgmt_stypes = mt7996_mgmt_stypes;
- }
- 
- static void
+
+	mt76_set_stream_caps(phy->mt76, true);
+	mt7996_set_stream_vht_txbf_caps(phy)

@@ -1,0 +1,20 @@
+menu "Configuration"
+	depends on PACKAGE_easymesh
+
+    config EASYMESH_BUILD_CONTROLLER
+        bool "Build EasyMesh Controller"
+        default y
+        help
+        Build the EasyMesh Controller in addition to the Agent and OneWifi
+        binaries. 
+        
+        When disabled, MySQL and the controller binary will not be compiled and added.
+
+    config CRYPTO_OFFLOAD_INLINE
+        bool
+        default y
+
+    config CRYPTO_XFRM_OFFLOAD_MTK_PCE
+        bool
+        default y
+endmenu

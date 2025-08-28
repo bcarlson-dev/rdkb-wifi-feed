@@ -22,7 +22,7 @@ define Package/rdkb-ieee1905
   SECTION:=net
   CATEGORY:=Network
   TITLE:=IEEE 1905 implementation in Rust
-  DEPENDS:=@(aarch64||arm) +libc +libpthread +librt +libstdcpp
+  DEPENDS:=@(aarch64||arm) +libc +libpthread +librt +libstdcpp +kmod-veth +socat +coreutils-timeout
   URL:=https://github.com/rdkcentral/rdkb-ieee1905.git
 endef
 
