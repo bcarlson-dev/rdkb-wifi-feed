@@ -276,12 +276,15 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/OneWifi/install/bin/OneWifi $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/unified-wifi-mesh/install/bin/onewifi_em_agent $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/unified-wifi-mesh/install/bin/onewifi_em_ctrl $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/unified-wifi-mesh/install/bin/onewifi_em_cli $(1)/usr/bin/
+
+	if [ "$(CONFIG_EASYMESH_BUILD_CONTROLLER)" = "y" ]; then \
+		$(INSTALL_BIN) $(PKG_BUILD_DIR)/unified-wifi-mesh/install/bin/onewifi_em_ctrl $(1)/usr/bin/; \
+	fi
+ 	# $(INSTALL_BIN) $(PKG_BUILD_DIR)/unified-wifi-mesh/install/bin/onewifi_em_cli $(1)/usr/bin/
 
 	# Install libraries
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/unified-wifi-mesh/install/lib/libemcli.so $(1)/usr/lib/
+	# $(INSTALL_BIN) $(PKG_BUILD_DIR)/unified-wifi-mesh/install/lib/libemcli.so $(1)/usr/lib/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/unified-wifi-mesh/install/lib/libalsap.a $(1)/usr/lib/
 	
 	# Install configuration files
@@ -305,12 +308,14 @@ define Package/$(PKG_NAME)/install
 		fi; \
 	fi
 	
-	# Copy certificates
-	if [ -f "$(PKG_BUILD_DIR)/unified-wifi-mesh/install/config/test_cert.crt" ]; then \
-		$(CP) $(PKG_BUILD_DIR)/unified-wifi-mesh/install/config/test_cert.crt $(1)/nvram/; \
-	fi
-	if [ -f "$(PKG_BUILD_DIR)/unified-wifi-mesh/install/config/test_cert.key" ]; then \
-		$(CP) $(PKG_BUILD_DIR)/unified-wifi-mesh/install/config/test_cert.key $(1)/nvram/; \
+	if [ "$(CONFIG_EASYMESH_BUILD_CONTROLLER)" = "y" ]; then \
+		# Copy certificates
+		if [ -f "$(PKG_BUILD_DIR)/unified-wifi-mesh/install/config/test_cert.crt" ]; then \
+			$(CP) $(PKG_BUILD_DIR)/unified-wifi-mesh/install/config/test_cert.crt $(1)/nvram/; \
+		fi; \
+		if [ -f "$(PKG_BUILD_DIR)/unified-wifi-mesh/install/config/test_cert.key" ]; then \
+			$(CP) $(PKG_BUILD_DIR)/unified-wifi-mesh/install/config/test_cert.key $(1)/nvram/; \
+		fi; \
 	fi
 endef
 
